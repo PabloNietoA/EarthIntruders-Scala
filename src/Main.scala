@@ -1,5 +1,8 @@
+import java.time.format.DateTimeFormatter
+import java.time.{Duration, LocalDateTime}
 import scala.util.Random
 import scala.math.ceil
+import scalaj.http._
 
 object Main
 {
@@ -174,6 +177,19 @@ object Main
     case Nil => throw new Error("Index out of range")
     case p :: _ if (i == 0) => p
     case _ :: r if (i > 0) => getInt(i-1, r)
+    case _ => throw new Error("Negative index")
+  }
+
+  /**
+   * develve el elemento string en la posicion i de la lista
+   * @param i posicion del elemento
+   * @param l lista
+   * @return string
+   */
+  def getString(i:Int, l:List[String]):String = l match {
+    case Nil => throw new Error("Index out of range")
+    case p :: _ if (i == 0) => p
+    case _ :: r if (i > 0) => getString(i-1, r)
     case _ => throw new Error("Negative index")
   }
 
@@ -360,7 +376,7 @@ object Main
    * @param modo modo de juego
    * @return lista de jugador desplazada
    */
-  def moverPlayer(p:List[Char], modo:Char):List[Char] = modo match {
+  def moverPlayer(p:List[Char], modo:Char, tablero:List[Char]):List[Char] = modo match {
     case 'm' => scala.io.StdIn.readLine().toLowerCase() match {
       case "a" =>
         val player = getPosPlayer(p)
@@ -373,12 +389,28 @@ object Main
       case _ => return p
     }
     case 'a' =>
-      Thread.sleep(1000)
-      val rand = new Random().nextInt() % 3
+      Thread.sleep(500)
       val player = getPosPlayer(p)
-      if (rand == 0 && player > 0) return replace('W',player-1,replace(' ', player, p))
-      else if (rand == 1 && player < anchura-1) return replace('W',player+1,replace(' ', player, p))
-      else return p
+      val izq = longitud(tablero) - anchura*3 - 1 + player
+      val der = longitud(tablero) - anchura*3 + 1 + player
+      val centro = longitud(tablero) - anchura*3 + player
+      if (get(centro, tablero) == ' ' && get(izq, tablero) == ' ' && get(der, tablero) == ' ')
+      {
+        val rand = new Random().nextInt() % 3
+        if (rand == 0 && player > 0) return replace('W', player - 1, replace(' ', player, p))
+        else if (rand == 1 && player < anchura - 1) return replace('W', player + 1, replace(' ', player, p))
+        else return p
+      }
+      else if (get(centro, tablero) == ' ') return p
+      else if (get(izq, tablero) == ' ') return replace('W',player-1,replace(' ', player, p))
+      else if (get(der, tablero) == ' ') return replace('W',player+1,replace(' ', player, p))
+      else
+      {
+        val rand = new Random().nextInt() % 3
+        if (rand == 0 && player > 0) return replace('W', player - 1, replace(' ', player, p))
+        else if (rand == 1 && player < anchura - 1) return replace('W', player + 1, replace(' ', player, p))
+        else return p
+      }
   }
 
   /**
@@ -671,7 +703,7 @@ object Main
 
 
 
-  def jugar(p:List[Char], t:List[Char], m:List[Char], v:Int, punt:Int, modo:Char):Unit =
+  def jugar(p:List[Char], t:List[Char], m:List[Char], v:Int, punt:Int, modo:Char):List[String] =
   {
     if(v > 0)
     {
@@ -689,10 +721,17 @@ object Main
       print("Puntos: "+puntos+"\n")
       val tablero = dibujarPlayer(tableroAux2, p)
       printTablero(tablero)
-      val player = moverPlayer(p, modo)
-      jugar(player, tablero, muros, vida, puntos, modo)
+      val player = moverPlayer(p, modo, t)
+      return jugar(player, tablero, muros, vida, puntos, modo)
     }
-    if (v == 0) print("\nGAME OVER\n")
+    else
+    {
+      print("\nGAME OVER\n")
+      print("\nIntroduce tus iniciales: ")
+      val nombre = scala.io.StdIn.readLine()
+
+      return List(nombre, punt.toString)
+    }
   }
 
   def seleccionarDim(tipo:String):Int = {
@@ -715,13 +754,33 @@ object Main
       case _ => throw new Error("Error: modo no reconocido")
     }
   }
-
   def main (args:Array[String]):Unit =
   {
+    val ini = LocalDateTime.now()
+
     val modo = seleccionarModo()
     val muros = generarDefensas(anchura, 0)
     val player = generarPlayer(anchura)
     val t = generarTablero(altura*anchura)
-    jugar(player, t, muros, 3, 0, modo)
+    val nombreypunt =  jugar(player, t, muros, 3, 0, modo)
+
+    val fin = LocalDateTime.now()
+
+    val duracion = Duration.between(ini, fin).getSeconds
+
+    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val hora = fin.format(format)
+
+    val nombre = getString(0, nombreypunt)
+    val puntos = getString(1, nombreypunt)
+
+    val url = "https://pl3-api-miguel-david.azurewebsites.net/publicar_resultado"
+    val response = Http(url).postForm
+      .param("nombre", nombre.toString)
+      .param("puntuacion", puntos.toString)
+      .param("fecha", hora.toString)
+      .param("tiempo", duracion.toString)
+      .asString
+    println(response.body)
   }
 }
