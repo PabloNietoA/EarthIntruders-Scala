@@ -151,6 +151,32 @@ object Main
     }
   }
 
+  /**
+   * toma un elemento de una lista de listas
+   * @param i id del elemento
+   * @param l lista de listas de caracteres
+   * @return lista de caracteres
+   */
+  def getList(i:Int, l:List[List[Char]]):List[Char] = l match {
+    case Nil => throw new Error("Index out of range")
+    case p :: _ if (i == 0) => p
+    case _ :: r if (i > 0) => getList(i-1, r)
+    case _ => throw new Error("Negative index")
+  }
+
+  /**
+   * toma un elemento de una lista de enteros
+   * @param i id del elemento
+   * @param l lista de enteros
+   * @return entero resultante
+   */
+  def getInt(i:Int, l:List[Int]):Int = l match {
+    case Nil => throw new Error("Index out of range")
+    case p :: _ if (i == 0) => p
+    case _ :: r if (i > 0) => getInt(i-1, r)
+    case _ => throw new Error("Negative index")
+  }
+
 
 
   //Alienígenas
@@ -559,7 +585,7 @@ object Main
 
   /**
    * realiza la explosion de una fila
-   * @param i contador (default 0)
+   * @param i fila de la explosion
    * @param t tablero
    * @param m muros
    * @return List(tablero, muros)
@@ -580,10 +606,10 @@ object Main
   }
 
   /**
-   * 
-   * @param i
-   * @param t
-   * @return
+   * realiza la explosion de una columna
+   * @param i posicion de la explosion
+   * @param t tablero
+   * @return tablero con la explosion realizadas
    */
   def borrarColumna(i:Int, t:List[Char]):List[Char] = borrarColumnaAux(0,i,t)
   def borrarColumnaAux(n:Int, i:Int, tablero:List[Char]): List[Char] ={
@@ -593,6 +619,12 @@ object Main
     else return tablero
   }
 
+  /**
+   * realiza la explosion del destructor
+   * @param i posicion de la explosion
+   * @param t tablero
+   * @return tablero con la explosion realizada
+   */
   def borrarCuadrado(i:Int, t:List[Char]): List[Char] =
   {
     val fila = i / anchura
@@ -603,6 +635,17 @@ object Main
     val filaFin = if(fila + 5 < altura) fila + 5 else altura - 1
     borrarSubFila(0, filaIni, filaFin, colIni, colFin, t)
   }
+
+  /**
+   * borra una subfila de la explosion cuadrada
+   * @param i contador (default 0)
+   * @param filaIni fila inicial del cuadrado
+   * @param filaFin fila final del cuadrado
+   * @param colIni columna inicial del cuadrado
+   * @param colFin columna final del cuadrado
+   * @param t tablero
+   * @return tablero con explosion
+   */
   def borrarSubFila(i:Int, filaIni:Int, filaFin:Int, colIni:Int, colFin:Int, t:List[Char]):List[Char] =
   {
     if(i < altura && i>=filaIni && i<=filaFin)
@@ -622,18 +665,11 @@ object Main
     else return t
   }
 
-  def getList(i:Int, l:List[List[Char]]):List[Char] = l match {
-    case Nil => throw new Error("Index out of range")
-    case p :: _ if (i == 0) => p
-    case _ :: r if (i > 0) => getList(i-1, r)
-    case _ => throw new Error("Negative index")
-  }
-  def getInt(i:Int, l:List[Int]):Int = l match {
-    case Nil => throw new Error("Index out of range")
-    case p :: _ if (i == 0) => p
-    case _ :: r if (i > 0) => getInt(i-1, r)
-    case _ => throw new Error("Negative index")
-  }
+
+
+  //Bucle de juego
+
+
 
   def jugar(p:List[Char], t:List[Char], m:List[Char], v:Int, punt:Int, modo:Char):Unit =
   {
