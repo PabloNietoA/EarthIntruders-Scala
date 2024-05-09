@@ -1,34 +1,54 @@
-import scala.util.Random, scala.math.ceil
+import scala.util.Random
+import scala.math.ceil
 
 object Main
 {
   //dimensiones de la matriz
-  val altura: Int = 7
-  val anchura: Int = 15
+  val altura: Int = seleccionarDim("altura")
+  val anchura: Int = seleccionarDim("anchura")
 
 
 
-  def listaVacia(l:List[Char]): Boolean = l match
-  {
-    case Nil => true
-    case _ :: _ => false
-  }
+  //Operaciones de listas
+
+
+
+  /**
+   * Calcula la longitud de una lista de caracteres
+   * @param l lista analizada
+   * @return la longitud
+   */
   def longitud(l:List[Char]): Int = l match
   {
     case Nil => 0
     case _ :: r => 1 + longitud(r)
   }
+
+  /**
+   * Devuelve una sublista de la lista l entre i y f-1 (de caracteres)
+   * @param i id del inicio de la sublista incluyendo i
+   * @param f id del final de la sublista excluyendo f
+   * @param l lista inicial
+   * @return la sublista de caracteres
+   */
   def sublist (i : Int, f : Int, l : List[Char]) : List[Char] = l match
   {
     case Nil => Nil
-    case _ if (longitud(l) < f) => throw new Error("Longitud de lista excedida")
-    case _ if (f < 0 || i < 0) => throw new Error("Ni el inicio ni final pueden ser negativos")
+    //case _ if (longitud(l) < f) => throw new Error("Longitud de lista excedida")
+    //case _ if (f < 0 || i < 0) => throw new Error("Ni el inicio ni final pueden ser negativos")
     case _ if (f < i) => throw new Error("El inicio debe ser menor que el final")
 
     case _ :: r if (i > 0) => sublist(i-1, f-1, r)
     case p :: r if (i == 0 && f > 0) => p :: sublist(i, f-1, r)
     case _ :: _ if (i == 0 && f == 0) => Nil
   }
+
+  /**
+   * Concatena dos listas de caracteres
+   * @param l1 primera lista de caracteres
+   * @param l2 segunda lista de caracteres
+   * @return concatenacion l1:::l2
+   */
   def concat (l1:List[Char], l2:List[Char]): List[Char] = l1 match
   {
     case Nil => l2 match
@@ -38,18 +58,39 @@ object Main
     }
       case p :: r => p::concat(r, l2)
   }
+
+  /**
+   * da la vuelta a la lista de caracteres
+   * @param l lista a voltear
+   * @return lista volteada
+   */
   def reverse (l:List[Char]):List[Char] = l match
   {
     case Nil => Nil
     case p :: r => concat(reverse(r), p::Nil)
     case x => x
   }
+
+  /**
+   * Obtiene un elemento de la lista de caracteres
+   * @param i id del elemento
+   * @param l lista de caracteres
+   * @return valor del elemento
+   */
   def get(i:Int, l:List[Char]):Char = l match {
     case Nil => throw new Error("Index out of range")
     case p :: _ if (i == 0) => p
     case _ :: r if (i > 0) => get(i-1, r)
     case _ => throw new Error("Negative index")
   }
+
+  /**
+   * reemplaza el valor i por c en la lista de caracteres
+   * @param c el caracter a reemplazar
+   * @param i id del caracter remplazado
+   * @param l lista de caracteres
+   * @return lista con caracter cambiado
+   */
   def replace(c:Char, i:Int, l:List[Char]):List[Char] = {
     if (i >= longitud(l) || i < 0) throw new Error("Index out of range")
     val lizq = sublist(0, i, l)
@@ -57,11 +98,21 @@ object Main
     return concat(lizq, c::lder)
   }
 
+  /**
+   * genera una lista de caracteres de longitud n con ' '
+   * @param n numero de elementos de la lista generada
+   * @return lista generada
+   */
   def generarTablero(n:Int):List[Char] = n match
   {
     case 0 => Nil
     case num => ' '::generarTablero(num-1)
   }
+
+  /**
+   * imprime la lista en forma de tablero
+   * @param t lista a imprimir
+   */
   def printTablero(t:List[Char]):Unit = {
     t match {
       case Nil => print("\n")
@@ -100,6 +151,17 @@ object Main
     }
   }
 
+
+
+  //Alienígenas
+
+
+
+  /**
+   * genera una linea de alienigenas
+   * @param i numero de aliens en la linea
+   * @return la linea de aliens
+   */
   def generarAliens(i:Int):List[Char] = {
     val rand = new Random()
     val r = rand.nextInt() % 101
@@ -114,12 +176,23 @@ object Main
     }
     else return Nil
   }
+
+  /**
+   * desplaza la lista una linea, borrando la ultima linea y añade una generada al principio
+   * @param t la lista del tablero
+   * @return el nuevo tablero
+   */
   def bajarAliens(t:List[Char]):List[Char] = {
     val avance = sublist(0, longitud(t)-anchura, t)
     val add = generarAliens(anchura)
     return concat(add, avance)
   }
 
+  /**
+   * realiza las transformaciones de los alienigenas
+   * @param l lista con el tablero
+   * @return tablero transformado
+   */
   def transformar(l:List[Char]):List[Char] = {
     transformarAux(anchura*altura-1, borrarTransf(anchura*altura-1, marcarTransfs(l)))
   }
@@ -132,6 +205,13 @@ object Main
       return transformarAux(i-1, l)
     }
   }
+
+  /**
+   *
+   * @param i finaliza las transformaciones
+   * @param l lista del tablero
+   * @return tablero transformado
+   */
   def borrarTransf(i:Int, l:List[Char]):List[Char] = {
     if (i == 0) return l
     else
@@ -174,11 +254,24 @@ object Main
       return borrarTransf(i-1, l)
     }
   }
+
+  /**
+   * marca las transformaciones para el borrado de elementos
+   * @param l lista del tablero
+   * @return tablero marcado
+   */
   def marcarTransfs(l:List[Char]):List[Char] = marcarTransfsAux(anchura*altura, l)
   def marcarTransfsAux(i:Int, l:List[Char]):List[Char] = {
     if (i == 0) return l
     else return marcarTransfsAux(i-1, marcarTransf(i, l))
   }
+
+  /**
+   * marca una transformacion en la casilla i si existe
+   * @param i posicion de la casilla
+   * @param t tablero
+   * @return tablero marcado en casilla
+   */
   def marcarTransf(i:Int, t:List[Char]):List[Char] = {
     if (i > anchura && i < longitud(t)-anchura && i % anchura > 0 && i % anchura < anchura-1)
     {
@@ -206,26 +299,68 @@ object Main
     return t
   }
 
+
+
+  //Jugador
+
+
+
+  /**
+   * genera la lista con la posicion del jugador
+   * @param n longitud de la lista
+   * @return lista con el player en el centro
+   */
   def generarPlayer(n:Int):List[Char] = n match {
     case 0 => Nil
     case i if (i-1 == anchura/2) => 'W'::generarPlayer(n-1)
     case _ => ' '::generarPlayer(n-1)
   }
+
+  /**
+   * devuelve la posicion del jugador en el mapa
+   * @param l lista del jugador
+   * @return posicion del jugador
+   */
   def getPosPlayer(l:List[Char]):Int = anchura - getPosPlayerAux(anchura, l)
   def getPosPlayerAux(i:Int, l:List[Char]):Int = l match {
     case Nil => throw new Error("No hay W")
     case 'W'::_ => i
     case _::r => getPosPlayerAux(i-1, r)
   }
-  def moverPlayer(p:List[Char]):List[Char] = scala.io.StdIn.readLine().toLowerCase() match {
-    case "a" =>
+
+  /**
+   * mueve al jugador tanto en manual como en automatico
+   * @param p lista del jugador
+   * @param modo modo de juego
+   * @return lista de jugador desplazada
+   */
+  def moverPlayer(p:List[Char], modo:Char):List[Char] = modo match {
+    case 'm' => scala.io.StdIn.readLine().toLowerCase() match {
+      case "a" =>
+        val player = getPosPlayer(p)
+        if (player>0)return replace('W',player-1,replace(' ', player, p))
+        else return p
+      case "d" =>
+        val player = getPosPlayer(p)
+        if(player<anchura-1)return replace('W',player+1,replace(' ', player, p))
+        else return p
+      case _ => return p
+    }
+    case 'a' =>
+      Thread.sleep(1000)
+      val rand = new Random().nextInt() % 3
       val player = getPosPlayer(p)
-      return replace('W',player-1,replace(' ', player, p))
-    case "d" =>
-      val player = getPosPlayer(p)
-      return replace('W',player+1,replace(' ', player, p))
-    case _ => return p
+      if (rand == 0 && player > 0) return replace('W',player-1,replace(' ', player, p))
+      else if (rand == 1 && player < anchura-1) return replace('W',player+1,replace(' ', player, p))
+      else return p
   }
+
+  /**
+   * dibuja al jugador en el tablero
+   * @param t tablero
+   * @param p lista del jugador
+   * @return tablero con jugador
+   */
   def dibujarPlayer(t:List[Char], p:List[Char]):List[Char] = {
     val posPRel = getPosPlayer(p)
     val iniPRow = longitud(t)-anchura
@@ -233,6 +368,13 @@ object Main
     return replace('W', posP, t)
   }
 
+  /**
+   * resta vida en caso de explosion
+   * @param p lista del jugador
+   * @param t tablero
+   * @param v vida actual
+   * @return vida disminuida
+   */
   def perderVida(p:List[Char], t:List[Char], v:Int):Int = {
     val posPRel = getPosPlayer(p)
     val iniPRow = longitud(t)-anchura
@@ -241,6 +383,18 @@ object Main
     return v
   }
 
+
+
+  //Muros
+
+
+
+  /**
+   * genera una lista con los muros
+   * @param n tamaño de la lista
+   * @param contador contador para que no haya más de 3 (default 0)
+   * @return lista con los muros
+   */
   def generarDefensas(n:Int, contador:Int):List[Char] = n match
   {
     case 0 => Nil
@@ -248,6 +402,14 @@ object Main
     case _ if (new Random().nextInt() % 101 <= 15) => 'B'::generarDefensas(n-1, contador+1)
     case _ => ' '::generarDefensas(n-1,0)
   }
+
+  /**
+   * dibuja los muros en el tablero
+   * @param t tablero
+   * @param m lista de muros
+   * @param i contador (default 0)
+   * @return tablero con muros
+   */
   def dibujarDefensas(t:List[Char], m:List[Char], i:Int):List[Char] = {
     val iniPRow = longitud(t)-anchura*5
     val pos = i + iniPRow
@@ -255,6 +417,13 @@ object Main
     else if (get(i, m) == 'B') return dibujarDefensas(replace('B', pos, t), m, i+1)
     else return dibujarDefensas(t, m, i+1)
   }
+
+  /**
+   * borra los muros residuales del tablero
+   * @param t tablero
+   * @param i contador (default 0)
+   * @return tablero sin muros residuales
+   */
   def borrarDefensas(t:List[Char], i:Int):List[Char] = {
     val iniPRow = longitud(t)-anchura*4
     val pos = i + iniPRow
@@ -262,7 +431,17 @@ object Main
     else if (get(pos, t) == 'B') return borrarDefensas(replace(' ', pos, t), i+1)
     else return borrarDefensas(t, i+1)
   }
-  def romperDefensas(t:List[Char], m:List[Char], i:Int):List[List[Char]] = {
+
+  /**
+   * detecta y activa colisiones especiales con los muros
+   * @param t tablero
+   * @param m lista de muros
+   * @param i contador (default 0)
+   * @param v vidas
+   * @param p puntuacion
+   * @return List(tablero, muros, List(vidas))
+   */
+  def romperDefensas(t:List[Char], m:List[Char], i:Int, v:Int, p:List[Char]):List[List[Char]] = {
     val iniPRow = longitud(t)-anchura*5
     val pos = i + iniPRow
     if (i < anchura && get(pos, t) == 'R' && get(i, m) == 'B')
@@ -271,24 +450,123 @@ object Main
         {
           val tablero = borrarColumna(i, t)
           val muros = replace(' ', i, m)
-          return romperDefensas(tablero, muros, i+1)
+          val vidas = if (get(i, p) == 'W') v-1 else v
+          return romperDefensas(tablero, muros, i+1,vidas, p)
         }
         else
         {
           val tableroymuros = borrarFila(pos, t, m)
           val tablero = getList(0, tableroymuros)
           val muros = getList(1, tableroymuros)
-          return List(tablero, muros)
+          return List(tablero, muros, (v+48).toChar::Nil)
         }
       }
-    else if (i < anchura) return romperDefensas(t, m, i+1)
-    else return List(t, m)
+    else if (i < anchura && get(pos, t) == 'D' && get(i, m) == 'B')
+    {
+      val tablero = borrarCuadrado(pos, t)
+      val vidas = destructorExpVidas(0, i-5, p, v)
+      return romperDefensas(tablero, m, i+1, vidas, p)
+    }
+    else if (i < anchura && get(pos, t) == 'X' && get(i,m) == 'B')
+    {
+      return romperDefensas(t, replace(' ', i, m), i+1, v, p)
+    }
+    else if (i < anchura) return romperDefensas(t, m, i+1, v, p)
+    else return List(t, m, (v+48).toChar::Nil)
   }
 
+
+
+  //Contacto con el suelo
+
+
+
+  /**
+   * suma puntos y vidas
+   * @param i contador (default 0)
+   * @param t tablero
+   * @param v vidas anteriores
+   * @param punt puntuacion anterior
+   * @return List(vidas, puntuacion)
+   */
+  def tocarSuelo(i:Int, t:List[Char], v:Int, punt:Int):List[Int] = {
+    val sublista = sublist(longitud(t)-anchura, longitud(t), t)
+    if (i < anchura){
+      if (get(i, sublista) == 'A') return tocarSuelo(i+1, t, v, punt+5)
+      else if (get(i, sublista) == 'N') return tocarSuelo(i+1, t, v, punt+25)
+      else if (get(i, sublista) == 'C') return tocarSuelo(i+1, t, v, punt+15)
+      else if (get(i, sublista) == 'D') return tocarSuelo(i+1, t, v, punt+5)
+      else if (get(i, sublista) == 'R') return tocarSuelo(i+1, t, v, punt+13)
+      else if (get(i, sublista) == 'X') return tocarSuelo(i+1, t, v+1, punt+100)
+      else return tocarSuelo(i+1, t, v, punt)
+    }
+    else return List(v, punt)
+  }
+
+  /**
+   * detecta colisiones especiales con el suelo y las efectua
+   * @param t tablero
+   * @param i contador (default 0)
+   * @param v vidas anteriores
+   * @param p lista del jugador
+   * @param m lista de muros (redundante)
+   * @return List(tablero, List(vidas))
+   */
+  def explotarSuelo(t:List[Char], i:Int, v:Int, p:List[Char], m:List[Char]):List[List[Char]] = {
+    val sublista = sublist(longitud(t)-anchura, longitud(t), t)
+    if (i<anchura)
+    {
+      if (get(i, sublista) == 'D')
+      {
+        val vidas = destructorExpVidas(0, i-5, p, v)
+        return explotarSuelo(borrarCuadrado(i+longitud(t)-anchura,t), i+1, vidas, p, m)
+      }
+      if (get(i, sublista) == 'R')
+      {
+        if (new Random().nextInt() % 101 <= 50)
+        {
+          val tablero = borrarColumna(i, t)
+          return explotarSuelo(tablero, i+1, v, p, m)
+        }
+        else
+        {
+          val tablero = borrarFila(i+longitud(t)-anchura, t, m)
+          return explotarSuelo(getList(0,tablero), i+1, v-1, p, m)
+        }
+      }
+      else return explotarSuelo(t,i+1,v,p,m)
+    }
+    else return List(t, (v + 48).toChar::Nil)
+  }
+
+  /**
+   * resta vidas para la explosion del destructor
+   * @param i contador (default 0)
+   * @param ini posicion desde la que se inicia la explosion - 5
+   * @param p lista del jugador
+   * @param v vidas anteriores
+   * @return vidas posteriores
+   */
+  def destructorExpVidas(i:Int, ini:Int, p:List[Char], v:Int): Int =
+  {
+    if (i + ini >= 0 && i + ini < anchura && i + ini < ini + 10)
+    {
+      if (get(i+ini, p) == 'W') return v-1
+    }
+    if (i+ini < anchura && i+ini < ini + 10) return destructorExpVidas(i+1, ini, p, v)
+    else return v
+  }
+
+  /**
+   * realiza la explosion de una fila
+   * @param i contador (default 0)
+   * @param t tablero
+   * @param m muros
+   * @return List(tablero, muros)
+   */
   def borrarFila(i:Int, t:List[Char], m:List[Char]): List[List[Char]] =
   {
     val fila = i / anchura
-    print(fila + " " + (longitud(t) / anchura - 4))
     if (fila == longitud(t) / anchura - 5) return List(borrarFilaAux(fila,t), generarTablero(anchura))
     else return List(borrarFilaAux(fila,t), m)
 
@@ -301,13 +579,47 @@ object Main
     return concat(principio, concat(generarTablero(anchura), fin))
   }
 
+  /**
+   * 
+   * @param i
+   * @param t
+   * @return
+   */
   def borrarColumna(i:Int, t:List[Char]):List[Char] = borrarColumnaAux(0,i,t)
   def borrarColumnaAux(n:Int, i:Int, tablero:List[Char]): List[Char] ={
     val pos = n*anchura + i
-    print(n + " " + pos + " " + i + "\n")
     if(n<altura && get(pos, tablero) == 'W') return borrarColumnaAux(n+1,i,replace('w', pos, tablero))
     else if(n<altura) return borrarColumnaAux(n+1,i,replace(' ', pos, tablero))
     else return tablero
+  }
+
+  def borrarCuadrado(i:Int, t:List[Char]): List[Char] =
+  {
+    val fila = i / anchura
+    val columna = i % anchura
+    val colIni = if(columna - 5 > 0) columna - 5 else 0
+    val colFin = if(columna + 5 < anchura) columna + 5 else anchura - 1
+    val filaIni = if(fila - 5 > 0) fila - 5 else 0
+    val filaFin = if(fila + 5 < altura) fila + 5 else altura - 1
+    borrarSubFila(0, filaIni, filaFin, colIni, colFin, t)
+  }
+  def borrarSubFila(i:Int, filaIni:Int, filaFin:Int, colIni:Int, colFin:Int, t:List[Char]):List[Char] =
+  {
+    if(i < altura && i>=filaIni && i<=filaFin)
+      return borrarSubFila(i+1, filaIni, filaFin, colIni, colFin, borrarSubFilaAux(0, i, colIni, colFin, t))
+    else if(i<altura)
+      return borrarSubFila(i+1, filaIni, filaFin, colIni, colFin, t)
+    else
+      return t
+  }
+  def borrarSubFilaAux(i:Int,fila: Int,colIni:Int, colFin:Int, t:List[Char]):List[Char] =
+  {
+    val pos = fila * anchura + i
+    if (i < anchura && i <= colFin && i >= colIni)
+      return borrarSubFilaAux(i+1, fila, colIni, colFin, replace(' ', pos, t))
+    else if (i < anchura)
+      return borrarSubFilaAux(i+1, fila, colIni, colFin, t)
+    else return t
   }
 
   def getList(i:Int, l:List[List[Char]]):List[Char] = l match {
@@ -316,31 +628,64 @@ object Main
     case _ :: r if (i > 0) => getList(i-1, r)
     case _ => throw new Error("Negative index")
   }
+  def getInt(i:Int, l:List[Int]):Int = l match {
+    case Nil => throw new Error("Index out of range")
+    case p :: _ if (i == 0) => p
+    case _ :: r if (i > 0) => getInt(i-1, r)
+    case _ => throw new Error("Negative index")
+  }
 
-  def jugar(p:List[Char], t:List[Char], m:List[Char], v:Int):Unit =
+  def jugar(p:List[Char], t:List[Char], m:List[Char], v:Int, punt:Int, modo:Char):Unit =
   {
     if(v > 0)
     {
-      val tableroAux = transformar(bajarAliens(t))
-      val tableroymuros = romperDefensas(tableroAux, m, 0)
+      val expSuelo = explotarSuelo(t, 0, v, p, m)
+      val tableroExplotado = getList(0, expSuelo)
+      val vidaypunt = tocarSuelo(0,tableroExplotado,get(0,getList(1,expSuelo))-48,punt)
+      val vidas = getInt(0, vidaypunt)
+      val puntos = getInt(1, vidaypunt)
+      val tableroAux = transformar(bajarAliens(tableroExplotado))
+      val tableroymuros = romperDefensas(tableroAux, m, 0, vidas, p)
       val muros = getList(1, tableroymuros)
       val tableroAux2 = dibujarDefensas(borrarDefensas(getList(0, tableroymuros), 0), muros, 0)
-      val vida = perderVida(p, tableroAux2, v)
+      val vida = if (get(0,getList(2,tableroymuros)).toInt - 48 != vidas) vidas-1 else perderVida(p, tableroAux2, vidas)
       print("Vidas: "+vida+"\n")
+      print("Puntos: "+puntos+"\n")
       val tablero = dibujarPlayer(tableroAux2, p)
       printTablero(tablero)
-      val player = moverPlayer(p)
-      jugar(player, tablero, muros, vida)
+      val player = moverPlayer(p, modo)
+      jugar(player, tablero, muros, vida, puntos, modo)
     }
     if (v == 0) print("\nGAME OVER\n")
   }
 
+  def seleccionarDim(tipo:String):Int = {
+    print("Introduzca la "+tipo+" del tablero: ")
+    val respuesta = scala.io.StdIn.readInt()
+    tipo match {
+      case "altura" if (respuesta>=10) => respuesta
+      case "anchura" if (respuesta>=15) => respuesta
+      case "altura" => throw new Error("Error: "+tipo+" por debajo de 10")
+      case "anchura" => throw new Error("Error: "+tipo+" por debajo de 15")
+    }
+  }
+
+  def seleccionarModo():Char = {
+    print("Introduzca el modo de juego (m/a): ")
+    val respuesta = scala.io.StdIn.readChar()
+    respuesta match {
+      case 'm' => respuesta
+      case 'a' => respuesta
+      case _ => throw new Error("Error: modo no reconocido")
+    }
+  }
+
   def main (args:Array[String]):Unit =
   {
+    val modo = seleccionarModo()
     val muros = generarDefensas(anchura, 0)
     val player = generarPlayer(anchura)
     val t = generarTablero(altura*anchura)
-    jugar(player, t, muros, 3)
+    jugar(player, t, muros, 3, 0, modo)
   }
-
 }
